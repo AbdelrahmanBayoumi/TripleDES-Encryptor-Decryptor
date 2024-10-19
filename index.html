@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Triple DES Encryption/Decryption</title>
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <!-- Include CryptoJS library from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+      }
+      .mode-toggle {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .mode-toggle label {
+        margin: 0 10px;
+        font-size: 18px;
+      }
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+      }
+      label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+      }
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      textarea[readonly] {
+        background-color: #f0f0f0;
+      }
+      .error {
+        color: red;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Triple DES Encryption and Decryption</h1>
+
+    <div class="container">
+      <!-- Toggle between Encryption and Decryption -->
+      <div class="mode-toggle">
+        <label>
+          <input type="radio" name="mode" value="encrypt" checked /> Encrypt
+        </label>
+        <label>
+          <input type="radio" name="mode" value="decrypt" /> Decrypt
+        </label>
+      </div>
+
+      <!-- Encryption Section -->
+      <div class="section active" id="encrypt-section">
+        <label for="encrypt-key">Key:</label>
+        <input
+          type="text"
+          id="encrypt-key"
+          placeholder="Enter encryption key"
+        />
+
+        <label for="plaintext">Plaintext:</label>
+        <textarea
+          id="plaintext"
+          rows="4"
+          placeholder="Enter text to encrypt"
+        ></textarea>
+
+        <button onclick="performEncryption()">Encrypt</button>
+
+        <label for="ciphertext">Ciphertext (Base64):</label>
+        <textarea id="ciphertext" rows="4" readonly></textarea>
+      </div>
+
+      <!-- Decryption Section -->
+      <div class="section" id="decrypt-section">
+        <label for="decrypt-key">Key:</label>
+        <input
+          type="text"
+          id="decrypt-key"
+          placeholder="Enter decryption key"
+        />
+
+        <label for="ciphertext-input">Ciphertext (Base64):</label>
+        <textarea
+          id="ciphertext-input"
+          rows="4"
+          placeholder="Enter ciphertext to decrypt"
+        ></textarea>
+
+        <button onclick="performDecryption()">Decrypt</button>
+
+        <label for="decrypted-text">Decrypted Text:</label>
+        <textarea id="decrypted-text" rows="4" readonly></textarea>
+      </div>
+
+      <div class="error" id="error-message"></div>
+    </div>
+
+    <script>
+      // Encryption function
+      function encrypt(text, keyString) {
+        var key = CryptoJS.enc.Utf8.parse(keyString);
+        var options = {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7,
+        };
+        var encrypted = CryptoJS.TripleDES.encrypt(text, key, options);
+        return encrypted.toString();
+      }
+
+      // Decryption function
+      function decrypt(ciphertext, keyString) {
+        var key = CryptoJS.enc.Utf8.parse(keyString);
+        var options = {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7,
+        };
+        var decrypted = CryptoJS.TripleDES.decrypt(ciphertext, key, options);
+        return decrypted.toString(CryptoJS.enc.Utf8);
+      }
+
+      // Perform Encryption
+      function performEncryption() {
+        var key = document.getElementById("encrypt-key").value?.trim();
+        var plaintext = document.getElementById("plaintext").value?.trim();
+        var errorMessage = document.getElementById("error-message");
+        errorMessage.textContent = "";
+
+        if (key === "" || plaintext === "") {
+          errorMessage.textContent = "Please enter both key and plaintext.";
+          return;
+        }
+
+        try {
+          var ciphertext = encrypt(plaintext, key);
+          document.getElementById("ciphertext").value = ciphertext;
+        } catch (error) {
+          errorMessage.textContent =
+            "Encryption failed. Please check the key and plaintext.";
+          console.error(error);
+        }
+      }
+
+      // Perform Decryption
+      function performDecryption() {
+        var key = document.getElementById("decrypt-key").value?.trim();
+        var ciphertext = document
+          .getElementById("ciphertext-input")
+          .value?.trim();
+        var errorMessage = document.getElementById("error-message");
+        errorMessage.textContent = "";
+
+        if (key === "" || ciphertext === "") {
+          errorMessage.textContent = "Please enter both key and ciphertext.";
+          return;
+        }
+
+        try {
+          var decryptedText = decrypt(ciphertext, key);
+          if (decryptedText) {
+            document.getElementById("decrypted-text").value = decryptedText;
+          } else {
+            errorMessage.textContent =
+              "Decryption failed. Please check the key and ciphertext.";
+          }
+        } catch (error) {
+          errorMessage.textContent =
+            "Decryption failed. Please check the key and ciphertext.";
+          console.error(error);
+        }
+      }
+
+      // Toggle between Encryption and Decryption sections
+      var modeRadios = document.getElementsByName("mode");
+      for (var i = 0; i < modeRadios.length; i++) {
+        modeRadios[i].addEventListener("change", toggleMode);
+      }
+
+      function toggleMode() {
+        var mode = document.querySelector('input[name="mode"]:checked').value;
+        var encryptSection = document.getElementById("encrypt-section");
+        var decryptSection = document.getElementById("decrypt-section");
+        var errorMessage = document.getElementById("error-message");
+        errorMessage.textContent = "";
+
+        if (mode === "encrypt") {
+          encryptSection.classList.add("active");
+          decryptSection.classList.remove("active");
+        } else {
+          decryptSection.classList.add("active");
+          encryptSection.classList.remove("active");
+        }
+      }
+    </script>
+  </body>
+</html>
